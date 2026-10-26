@@ -1,6 +1,11 @@
 #include <iostream>
 #include <limits>
+#include <string>
+#include <vector>
+#include <cmath>
+
 using namespace std;
+
 struct Node {
     int data;
     int count;
@@ -18,11 +23,10 @@ private:
         if (node == nullptr) {
             return new Node(val);
         }
-    
-        if (val == node->data) { /*Ð•Ð¡Ð›Ð˜ Ð£Ð‘Ð ÐÐ¢Ð¬ Ð­Ð¢Ðž Ð£Ð¡Ð›ÐžÐ’Ð˜Ð•, Ð¢Ðž Ð”Ð£Ð‘Ð›Ð˜ÐšÐÐ¢ ÐŸÐ ÐžÐ˜Ð“ÐÐžÐ Ð˜Ð Ð£Ð•Ð¢Ð¡Ð¯ Ð˜ Ð”ÐžÐ‘ÐÐ’Ð›Ð•ÐÐ˜Ð• ÐžÐ”Ð˜ÐÐÐšÐžÐ’Ð«Ð¥ Ð­Ð›Ð•ÐœÐ•ÐÐ¢ÐžÐ’ Ð‘Ð£Ð”Ð•Ð¢ Ð˜Ð¡ÐšÐ›Ð®Ð§Ð•ÐÐž*/
+
+        if (val == node->data) {
             node->count++;
         }
-           
         else if (val < node->data) {
             node->left = insert(node->left, val);
         }
@@ -32,22 +36,50 @@ private:
         return node;
     }
 
+    // ÁËÎÊ ÎÒÐÈÑÎÂÊÈ
+    int getHeight(Node* node) const {
+        if (node == nullptr) return 0;
+        return 1 + max(getHeight(node->left), getHeight(node->right));
+    }
 
-    void tree(Node* node) {
-        if (node == nullptr) { 
+    
+    void fillMatrix(Node* node, int row, int col, int dist, vector<vector<string>>& matrix) {
+        if (node == nullptr) return;
+
+        
+        string valStr = to_string(node->data);
+        matrix[row][col] = valStr;
+
+        
+        if (node->left != nullptr) {
+            int nextCol = col - dist;
+            int nextRow = row + 2;
+           
+            if (row + 1 < matrix.size() && nextCol >= 0) {
+                matrix[row + 1][col - dist / 2] = "/";
+            }
+            fillMatrix(node->left, nextRow, nextCol, dist / 2, matrix);
+        }
+
+       
+        if (node->right != nullptr) {
+            int nextCol = col + dist;
+            int nextRow = row + 2;
+            
+            if (row + 1 < matrix.size() && nextCol < matrix[0].size()) {
+                matrix[row + 1][col + dist / 2] = "\\";
+            }
+            fillMatrix(node->right, nextRow, nextCol, dist / 2, matrix);
+        }
+    }
+
+    void getcount(Node* node, int val) {
+        if (node == nullptr) {
+            cout << "Ýëåìåíò íå íàéäåí" << endl;
             return;
         }
-        tree(node->left);
-        std::cout << node->data << " ";
-        tree(node->right);
-    }
-    void getcount(Node* node, int val) {
-        if (node == nullptr){
-            cout << "Ð­Ð»ÐµÐ¼ÐµÐ½Ñ‚ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½" << endl;
-            return;
-        }   
         if (node->data == val) {
-            cout << "Ð§Ð¸ÑÐ»Ð¾ Ð²Ñ…Ð¾Ð¶Ð´ÐµÐ½Ð¸Ð¹: " << node->count << endl;
+            cout << "×èñëî âõîæäåíèé: " << node->count << endl;
             return;
         }
         if (node->data < val) {
@@ -57,13 +89,14 @@ private:
             return getcount(node->left, val);
         }
     }
+
     void find(Node* node, int val) {
-        if (node == nullptr){
-            cout << "Ð­Ð»ÐµÐ¼ÐµÐ½Ñ‚ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½" << endl;
+        if (node == nullptr) {
+            cout << "Ýëåìåíò íå íàéäåí" << endl;
             return;
-        }   
+        }
         if (node->data == val) {
-            cout << "Ð­Ð»ÐµÐ¼ÐµÐ½Ñ‚ Ð½Ð°Ð¹Ð´ÐµÐ½: " << node->data << endl;
+            cout << "Ýëåìåíò íàéäåí: " << node->data << endl;
             return;
         }
         else if (node->data < val) {
@@ -73,66 +106,102 @@ private:
             return find(node->left, val);
         }
     }
+
 public:
     BinarySearchTree() : root(nullptr) {}
-    void insert(int val) {
+
+    void insert_val(int val) {
         root = insert(root, val);
     }
 
+    
     void print_tree() {
         if (root == nullptr) {
-            cout << "Ð”ÐµÑ€ÐµÐ²Ð¾ Ð¿ÑƒÑÑ‚Ð¾Ðµ" << endl;
+            cout << "Äåðåâî ïóñòîå" << endl;
+            return;
         }
-        tree(root);
-        std::cout << std::endl;
+
+        int h = getHeight(root);
+        
+        int rows = h * 2 - 1;
+        int cols = (1 << h) * 4; 
+        vector<vector<string>> matrix(rows, vector<string>(cols, " "));
+
+        
+        int startCol = cols / 2;
+        fillMatrix(root, 0, startCol, cols / 4, matrix);
+
+        cout << "\n--- Ñòðóêòóðà äåðåâà (êëàññè÷åñêàÿ) ---\n";
+        for (int i = 0; i < rows; i++) {
+            bool hasContent = false;
+            
+            for (int j = 0; j < cols; j++) {
+                if (matrix[i][j] != " ") {
+                    hasContent = true;
+                    break;
+                }
+            }
+            if (hasContent) {
+             
+                for (int j = 0; j < cols; j++) {
+                    cout << matrix[i][j];
+                }
+                cout << endl;
+            }
+        }
+        cout << "---------------------------------------\n" << endl;
     }
+
     void find(int val) {
         return find(root, val);
     }
-    void getcount(int val){
+
+    void getcount(int val) {
         return getcount(root, val);
     }
 };
 
 int main() {
     BinarySearchTree bst;
-
+    setlocale(LC_ALL, "rus");
     int choice = 0;
     while (choice != 5) {
-        std::cout << "Ð’Ñ‹Ð±ÐµÑ€ÐµÑ‚Ðµ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ðµ:\n"<< std::endl;
-        std::cout << "1: Ð”Ð¾Ð±Ð°Ð²Ð¸Ñ‚ÑŒ ÑÐ»ÐµÐ¼ÐµÐ½Ñ‚\n" << std::endl;
-        std::cout << "2: ÐÐ°Ð¹Ñ‚Ð¸ ÑÐ»ÐµÐ¼ÐµÐ½Ñ‚\n" << std::endl;
-        std::cout << "3: ÐÐ°Ð¹Ñ‚Ð¸ Ñ‡Ð¸ÑÐ»Ð¾ Ð²Ñ…Ð¾Ð¶Ð´ÐµÐ½Ð¸Ð¹ ÑÐ»ÐµÐ¼ÐµÐ½Ñ‚Ð°\n" << std::endl;
-        std::cout << "4: Ð¡Ð¿Ð¸ÑÐ¾Ðº ÑÐ»ÐµÐ¼ÐµÐ½Ñ‚Ð¾Ð²\n" << std::endl;
-        std::cout << "5: Ð’Ñ‹Ñ…Ð¾Ð´\n" << std::endl;
+        std::cout << "\nÂûáåðåòå äåéñòâèå:\n";
+        std::cout << "1: Äîáàâèòü ýëåìåíò\n";
+        std::cout << "2: Íàéòè ýëåìåíò\n";
+        std::cout << "3: Íàéòè ÷èñëî âõîæäåíèé ýëåìåíòà\n";
+        std::cout << "4: Îòðèñîâàòü äåðåâî\n";
+        std::cout << "5: Âûõîä\n";
+        std::cout << "Âàø âûáîð: ";
+
         if (!(std::cin >> choice)) {
-              std::cout << "Ð’Ð²ÐµÐ´ÐµÐ½Ð¾ Ð½Ðµ Ñ‡Ð¸ÑÐ»Ð¾\n";
-                    std::cin.clear();
-                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Ââåäåíî íå ÷èñëî\n";
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            continue;
         }
+
         if (choice == 1) {
             int val;
-            cout  << "Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ: " << endl;
+            cout << "Ââåäèòå çíà÷åíèå: ";
             cin >> val;
-            bst.insert(val);
+            bst.insert_val(val);
         }
-        if (choice == 2) {
+        else if (choice == 2) {
             int val;
-            cout  << "Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ: " << endl;
+            cout << "Ââåäèòå çíà÷åíèå: ";
             cin >> val;
             bst.find(val);
         }
-        if (choice == 3) {
+        else if (choice == 3) {
             int val;
-            cout  << "Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ: " << endl;
+            cout << "Ââåäèòå çíà÷åíèå: ";
             cin >> val;
             bst.getcount(val);
         }
-        if (choice == 4) {
+        else if (choice == 4) {
             bst.print_tree();
         }
     }
     return 0;
-
 }
-
